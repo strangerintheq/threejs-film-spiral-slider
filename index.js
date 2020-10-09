@@ -12,7 +12,7 @@ class ImagesFilm {
         const filmColor = '#876'
         const three = configureThree();
         const customDepthMaterial = createDepthMaterial();
-
+        const textureLoader = new THREE.TextureLoader();
         let lastUploadIndex;
         const textures = [];
 
@@ -44,21 +44,28 @@ class ImagesFilm {
                 uniform sampler2D image2;
                 uniform sampler2D image3;
                 void main() {
-              
-                    vec4 img2 = texture2D(image2, vUv);
-     
-                    float v = (fract(rotation) - 0.5)*2.;
-                    if (v < 0.)
-                        gl_FragColor = mix(texture2D(image1, vUv), img2, 1.+v);
-                    else
-                        gl_FragColor = mix(img2, texture2D(image3, vUv), v);     
+                    
+                    vec2 uv = vUv;
+                    vec4 img2 = texture2D(image2, uv);
+            
+                    float v = fract(rotation);
+                    if (v < 0.5) {
+                        v = clamp((v+0.5)*3., 0., 1.);
+                      //  uv += vec2(v/10., 0);
+                        gl_FragColor = mix(texture2D(image1, uv), img2, v);
+                    } else {
+                        v = clamp((v-0.5)*3., 0., 1. );
+                     //   uv += vec2(v/10., 0);
+                        gl_FragColor = mix(img2, texture2D(image3, uv), v);  
+                    }
+                    gl_FragColor *= clamp(vUv.x*2., 0., 1. );       
                 }   
             `
         });
 
-        const s = 1.6
-        const bg = new THREE.Mesh(new THREE.PlaneGeometry(s/2*3,s), bgMat);
-        bg.position.set(s/2,0,-2)
+        const s = 1.8
+        const bg = new THREE.Mesh(new THREE.PlaneGeometry(s*2,s), bgMat);
+        bg.position.set(s/3,0,-2)
         three.scene.add(bg);
 
         const film = new THREE.Object3D();
@@ -141,9 +148,8 @@ class ImagesFilm {
                 slide.customDepthMaterial = customDepthMaterial;
                 slide.customDepthMaterial.map = tex;
                 film.add(slide);
-
-                textures[i] = tex;
             };
+            textures[i] = textureLoader.load(url);
         }
 
         function createMaterial(map, index, side) {
@@ -165,7 +171,7 @@ class ImagesFilm {
          ` + main).split(out).join(out + `
             float value = abs(slideIndex + vUv.x - rotation);
             value = clamp(value, 0., 1.);
-            if (abs(vUv.y - 0.5) < 0.38 && abs(vUv.x - 0.5) < 0.46) {
+            if (abs(vUv.y - 0.5) < 0.359 && abs(vUv.x - 0.5) < 0.471) {
                 float grayscale = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
                 gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(grayscale), value);
             }
@@ -271,6 +277,8 @@ class ImagesFilm {
         }
 
         function moveFilm(t){
+
+            self.rotation = Math.min(2.7, Math.max(self.rotation, -1.4));
 
             film.rotation.y += (self.rotation - film.rotation.y)/20;
             film.rotation.y += Math.sin(t/2000)/500
