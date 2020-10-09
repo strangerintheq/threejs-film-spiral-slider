@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <style>
+        body {
+            margin: 0;
+            overflow:hidden
+        }
+    </style>
+    <script src="https://unpkg.com/three@0.121.1/build/three.js"></script>
+    <script src="index.js"></script>
+    <script>
+
+        const imgs = [
+            'gOrJaYO',
+            'abOxwzK',
+            'XWKrKaR',
+            'abNvxrz',
+            'wvKrKdG',
+            'KKVoqya'
+        ].map(id => {
+            return `https://assets.codepen.io/2784596/internal/screenshots/pens/${id}.default.png?fit=cover&format=auto&ha=false&height=180&quality=75&v=2&version=1602102628&width=320`;
+        })
+
+        const film = new ImagesFilm(imgs);
+
+        document.body.append(film.domElement);
+
+
+
+        let touchStartY;
+        let rotationAtStart;
+
+        addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+            rotationAtStart = film.rotation;
+        });
+
+        addEventListener('touchmove', (e) => {
+            film.rotation = rotationAtStart + (e.touches[0].clientY - touchStartY)/50;
+        });
+
+        addEventListener('wheel', (e) => {
+            film.rotation -= e.deltaY/400;
+        });
+
+    </script>
+</body>
+</html>
